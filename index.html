@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Astra</title>
+<style>
+:root{
+  --bg:#e3e5e0; --side:#d4d7d1; --card:#eef0eb; --ink:#232825; --mute:#556059;
+  --line:#c3c8c0; --green:#1c4a37; --green2:#2a6349; --on-green:#eef3ee; --code:#cfd3cc;
+  --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+:root{--lg:var(--green);--reply:var(--serif);--danger:#a83a3a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#232826; --side:#1b1f1d; --card:#2d332f; --ink:#e4e7e2; --mute:#9aa39c; --line:#3a413c; --green:#2f7556; --green2:#3d8c69; --on-green:#f2f7f2; --code:#1a1e1c; --danger:#f2a3a3; --lg:var(--ink)}}
+:root[data-theme="dark"]{--bg:#232826; --side:#1b1f1d; --card:#2d332f; --ink:#e4e7e2; --mute:#9aa39c; --line:#3a413c; --green:#2f7556; --green2:#3d8c69; --on-green:#f2f7f2; --code:#1a1e1c; --danger:#f2a3a3; --lg:var(--ink)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);display:flex;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--green2);outline-offset:2px}
+
+#side{width:272px;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;
+  padding:14px 10px;flex-shrink:0;transition:transform .2s}
+.brand{font-family:var(--serif);font-size:22px;padding:6px 10px 14px;color:var(--green)}
+#new{background:var(--green);color:var(--on-green);border-radius:10px;padding:10px 12px;text-align:left;font-weight:500;margin-bottom:12px}
+#new:hover{background:var(--green2)}
+#list{flex:1;overflow-y:auto}
+.chat{display:flex;align-items:center;width:100%;text-align:left;padding:9px 10px;border-radius:8px;color:var(--mute);gap:6px}
+.chat span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat:hover,.chat.on{background:var(--card);color:var(--ink)}
+.chat .x{opacity:0;padding:0 4px}
+.chat:hover .x{opacity:1}
+
+main{flex:1;display:flex;flex-direction:column;min-width:0;height:100%}
+header{display:none;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+#menu{font-size:22px;padding:2px 8px}
+#scroll{flex:1;overflow-y:auto}
+#thread{max-width:740px;margin:0 auto;padding:28px 20px 12px}
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+.empty h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,5vw,40px);margin:0 0 8px;color:var(--lg)}
+.empty p{color:var(--mute);margin:0}
+
+.msg{margin:0 0 26px}
+.user{display:flex;justify-content:flex-end}
+.user .b{background:var(--card);border:1px solid var(--line);padding:10px 15px;border-radius:16px;max-width:85%;white-space:pre-wrap;word-wrap:break-word}
+.bot .b{font-family:var(--reply);font-size:17px;line-height:1.7}
+.bot .b p{margin:0 0 .9em}
+.bot .b h1,.bot .b h2,.bot .b h3{font-family:var(--sans);margin:1.2em 0 .5em;line-height:1.3}
+.bot .b h1{font-size:1.35em}.bot .b h2{font-size:1.2em}.bot .b h3{font-size:1.05em}
+.bot .b ul,.bot .b ol{padding-left:1.4em;margin:0 0 .9em}
+.bot .b a{color:var(--green2)}
+.bot .b code{background:var(--code);padding:2px 5px;border-radius:5px;font-size:.88em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.bot .b pre{background:var(--code);padding:14px;border-radius:10px;overflow-x:auto;margin:0 0 1em}
+.bot .b pre code{background:none;padding:0;font-size:.86em;line-height:1.55}
+.err{color:#a33;font-family:var(--sans);font-size:15px}
+.dots::after{content:"●";animation:p 1s infinite;color:var(--green2)}
+@keyframes p{50%{opacity:.2}}
+
+#dock{padding:8px 16px 16px}
+#box{max-width:740px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:10px 10px 10px 16px;display:flex;align-items:flex-end;gap:8px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+#box:focus-within{border-color:var(--green2)}
+textarea{flex:1;resize:none;border:0;background:none;color:var(--ink);font:inherit;font-size:16px;max-height:200px;
+  padding:6px 0;outline:none;line-height:1.5}
+#send{background:var(--green);color:var(--on-green);width:38px;height:38px;border-radius:10px;font-size:18px;flex-shrink:0}
+#send:hover{background:var(--green2)}
+#send:disabled{opacity:.4;cursor:default}
+.note{text-align:center;color:var(--mute);font-size:12px;margin-top:8px}
+
+@media (max-width:760px){
+  #side{position:fixed;inset:0 auto 0 0;z-index:5;transform:translateX(-100%);padding-top:calc(14px + env(safe-area-inset-top,0px))}
+  #side.open{transform:none;box-shadow:4px 0 24px rgba(0,0,0,.3)}
+  header{display:flex}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.logo{display:block;background:currentColor;aspect-ratio:271/279;-webkit-mask:url(logo.png) center/contain no-repeat;mask:url(logo.png) center/contain no-repeat}
+.word{font-weight:800;letter-spacing:.14em;font-size:15px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--sans);color:var(--ink)}
+.brand .logo{width:30px;color:var(--lg)}
+.who{display:flex;align-items:center;gap:8px;padding:10px;border-top:1px solid var(--line);margin-top:8px;font-size:14px}
+.who span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who button{color:var(--mute);font-size:13px;text-decoration:underline}
+#login,#onb{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+#login[hidden],#onb[hidden]{display:none}
+.lbox{width:100%;max-width:360px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.lbox .logo{width:92px;color:var(--ink)}
+.lbox .word{font-size:20px;margin-top:-4px}
+.lbox h2{font-family:var(--serif);font-weight:400;font-size:26px;margin:10px 0 2px;text-align:center}
+.lbox input,.lbox select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:16px}
+.lbox input:focus,.lbox select:focus{outline:2px solid var(--green2);border-color:transparent}
+.lbtn{width:100%;background:var(--green);color:var(--on-green);border-radius:12px;padding:12px;font-weight:600}
+.lbtn:hover{background:var(--green2)}
+.or{display:flex;align-items:center;gap:10px;width:100%;color:var(--mute);font-size:13px}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.sw{color:var(--mute);font-size:14px}.sw button{color:var(--green2);font-weight:600}
+#lerr{color:#a33;font-size:14px;min-height:18px;text-align:center}
+#gbtn{min-height:44px;display:flex;justify-content:center;width:100%}
+
+#splash{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease,visibility .45s}
+#splash.off{opacity:0;visibility:hidden;pointer-events:none}
+#splash .logo{width:120px;color:var(--lg);animation:rise .7s ease both}
+#splash .word{font-size:20px;letter-spacing:.32em;margin-right:-.32em;color:var(--ink);animation:rise .7s .15s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+
+#settings,#lib,#mem{position:fixed;inset:0;z-index:15;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+#settings[hidden],#lib[hidden],#mem[hidden],#sheet[hidden]{display:none}
+.sbar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;flex-shrink:0}
+.sbar h2{font-family:var(--serif);font-weight:500;font-size:22px;margin:0}
+.sbar button{width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.sbody{flex:1;overflow-y:auto;padding:8px 16px 32px;max-width:640px;width:100%;margin:0 auto}
+.acct{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+.acct b{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{background:var(--ink);color:var(--bg);border-radius:99px;padding:6px 14px;font-size:13px;font-weight:700;flex-shrink:0}
+.grp{background:var(--card);border-radius:18px;overflow:hidden;margin-bottom:16px}
+.row{display:flex;align-items:center;gap:16px;width:100%;text-align:left;padding:16px 20px;min-height:60px}
+.row+.row{border-top:2px solid var(--bg)}
+.row:hover{background:var(--side)}
+.ic{width:24px;display:flex;justify-content:center;flex-shrink:0}
+.rt{flex:1;font-size:17px}
+.rt small{display:block;color:var(--mute);font-size:15px;margin-top:2px}
+.tg{width:52px;height:30px;border-radius:15px;background:var(--line);position:relative;flex-shrink:0;transition:background .2s}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.tg.on{background:var(--green2)}.tg.on::after{transform:translateX(22px)}
+.danger{color:var(--danger)}
+#sheet{position:fixed;inset:0;z-index:25;display:flex;align-items:flex-end;justify-content:center}
+.shbg{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.sh{position:relative;width:100%;max-width:520px;background:var(--card);border-radius:22px 22px 0 0;padding:20px 14px calc(18px + env(safe-area-inset-bottom,0px))}
+.sh h3{font-family:var(--serif);font-weight:500;font-size:20px;margin:0 8px 10px}
+.sh p{margin:8px;color:var(--mute);line-height:1.5}.sh p b{color:var(--ink)}
+.opt{display:flex;justify-content:space-between;align-items:center;width:100%;padding:15px 12px;border-radius:12px;font-size:17px;text-align:left}
+.opt:hover{background:var(--bg)}.opt.on{color:var(--green2);font-weight:600}
+.upg{border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.upg h3{font-family:var(--serif);font-weight:500;font-size:20px;margin:0 0 6px}
+.upg p{margin:0 0 14px;color:var(--mute)}
+.upg button{background:var(--ink);color:var(--bg);border-radius:99px;padding:10px 20px;font-weight:600;font-size:16px}
+.src{font-family:var(--sans);font-size:13px;color:var(--mute);margin-top:4px}
+#lstat{width:100%;max-width:640px;margin:0 auto;padding:0 20px;min-height:20px;font-size:14px;color:var(--mute)}
+#lstat.err{color:var(--danger)}
+.src a{color:var(--green2)}
+.mh{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:22px 6px 8px;font-weight:600}
+.mut{color:var(--mute);line-height:1.5;padding:0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:22px;max-width:520px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:9px 14px;font-size:14px}
+.chip:hover{border-color:var(--green2)}
+</style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1c4a37">
+<link rel="apple-touch-icon" href="/icon-192.png">
+</head>
+<body>
+<div id="splash" aria-hidden="true"><i class="logo"></i><div class="word">ASTRA</div></div>
+<aside id="side">
+  <div class="brand"><i class="logo"></i><span class="word">ASTRA</span></div>
+  <button id="new">+ New chat</button>
+  <button class="chat" id="docsb" style="margin-bottom:8px"><span>My documents</span></button>
+  <div id="list"></div>
+  <div class="who"><span id="uname"></span><button id="setb">Settings</button></div>
+</aside>
+<main>
+  <header><button id="menu" aria-label="Open chats">☰</button><div class="brand"><i class="logo"></i><span class="word">ASTRA</span></div></header>
+  <div id="scroll"><div id="thread"></div></div>
+  <div id="dock">
+    <div id="box">
+      <textarea id="in" rows="1" placeholder="Message the assistant" aria-label="Message"></textarea>
+      <button id="send" aria-label="Send">↑</button>
+    </div>
+    <div class="note">AI can make mistakes. Check important information.</div>
+  </div>
+</main>
+
+<div id="settings" hidden>
+  <div class="sbar"><button id="sback" aria-label="Back"></button><h2>Settings</h2><button id="sinfo" aria-label="About Astra"></button></div>
+  <div class="sbody" id="sbody"></div>
+</div>
+<div id="lib" hidden>
+  <div class="sbar"><button id="lback" aria-label="Back"></button><h2>My documents</h2><span style="width:44px"></span></div>
+  <div id="lstat" role="status"></div>
+  <div class="sbody" id="lbody"></div>
+  <input type="file" id="lfile" hidden accept=".pdf,.txt,.md,.csv,.json,.docx,.png,.jpg,.jpeg,.webp">
+</div>
+<div id="mem" hidden>
+  <div class="sbar"><button id="mback" aria-label="Back"></button><h2>Memory &amp; data</h2><span style="width:44px"></span></div>
+  <div class="sbody" id="mbody"></div>
+</div>
+<div id="onb" hidden><div class="lbox">
+  <i class="logo"></i><div class="word">ASTRA</div>
+  <h2>Let's set up your assistant</h2>
+  <input id="ob1" placeholder="Business name" aria-label="Business name" maxlength="80">
+  <input id="ob2" placeholder="What do you sell or do?" aria-label="What you sell or do" maxlength="200">
+  <input id="ob3" placeholder="Your main goal this month" aria-label="Main goal this month" maxlength="200">
+  <select id="ob4" aria-label="Preferred tone"><option>Friendly</option><option>Professional</option><option>Direct</option></select>
+  <button class="lbtn" id="obsave">Save and start</button>
+  <div class="sw"><button id="obskip">Skip for now</button></div>
+</div></div>
+<div id="sheet" hidden><div class="shbg" id="shbg"></div><div class="sh"><h3 id="sht"></h3><div id="shb"></div></div></div>
+<div id="login" hidden>
+  <div class="lbox">
+    <i class="logo"></i><div class="word">ASTRA</div>
+    <h2 id="ltitle">Welcome back</h2>
+    <div id="gbtn"></div>
+    <div class="or">or</div>
+    <input id="lname" placeholder="Name" autocomplete="username" aria-label="Name">
+    <input id="lpw" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password">
+    <div id="lerr" role="alert"></div>
+    <button class="lbtn" id="lgo">Log in</button>
+    <div class="sw"><span id="ltxt">New to Astra?</span> <button id="lsw">Create account</button></div>
+  </div>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+let chats = [], cur = null, busy = false;
+
+let user=null, ukey="chats";
+function load(){ try{ chats = JSON.parse(localStorage.getItem(ukey)||"[]"); }catch(e){ chats=[]; } }
+function save(){ try{ localStorage.setItem(ukey, JSON.stringify(chats)); }catch(e){} }
+const uid = () => Math.random().toString(36).slice(2);
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function inline(s){
+  return esc(s)
+    .replace(/`([^`]+)`/g,"<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>")
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+function md(text){
+  const out=[]; const parts=text.split(/```/);
+  parts.forEach((part,i)=>{
+    if(i%2){ const nl=part.indexOf("\n"); out.push("<pre><code>"+esc(nl>=0?part.slice(nl+1):part)+"</code></pre>"); return; }
+    let list=null;
+    const close=()=>{ if(list){ out.push("</"+list+">"); list=null; } };
+    part.split("\n").forEach(line=>{
+      let m;
+      if((m=line.match(/^(#{1,3})\s+(.*)/))){ close(); out.push(`<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`); }
+      else if((m=line.match(/^\s*[-*]\s+(.*)/))){ if(list!=="ul"){close();out.push("<ul>");list="ul";} out.push("<li>"+inline(m[1])+"</li>"); }
+      else if((m=line.match(/^\s*\d+\.\s+(.*)/))){ if(list!=="ol"){close();out.push("<ol>");list="ol";} out.push("<li>"+inline(m[1])+"</li>"); }
+      else if(line.trim()===""){ close(); }
+      else { close(); out.push("<p>"+inline(line)+"</p>"); }
+    });
+    close();
+  });
+  return out.join("");
+}
+
+function renderList(){
+  const l=$("#list"); l.innerHTML="";
+  chats.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="chat"+(c.id===cur?" on":"");
+    b.innerHTML="<span></span><i class='x' title='Delete'>✕</i>";
+    b.firstChild.textContent=c.title;
+    b.onclick=(e)=>{
+      if(e.target.classList.contains("x")){ chats=chats.filter(x=>x.id!==c.id); if(cur===c.id) cur=null; save(); renderList(); renderThread(); return; }
+      cur=c.id; renderList(); renderThread(); $("#side").classList.remove("open");
+    };
+    l.appendChild(b);
+  });
+}
+function renderThread(){
+  const t=$("#thread"); t.innerHTML="";
+  const c=chats.find(x=>x.id===cur);
+  if(!c||!c.messages.length){
+    t.innerHTML='<div class="empty"><h1>How can I help your business today?</h1><p>Your chats stay in this browser.</p><div class="chips">'+CHIPS.map(c=>'<button class="chip" data-p="'+c[1]+'">'+c[0]+'</button>').join("")+'</div></div>';
+    $("#thread").style.height="100%"; return;
+  }
+  t.style.height="";
+  c.messages.forEach(m=>t.appendChild(bubble(m)));
+  $("#scroll").scrollTop=1e9;
+}
+function bubble(m){
+  const d=document.createElement("div"); d.className="msg "+(m.role==="user"?"user":"bot");
+  const b=document.createElement("div"); b.className="b";
+  if(m.role==="user") b.textContent=m.content; else b.innerHTML=m.content?botHtml(m):'<span class="dots"></span>';
+  d.appendChild(b); return d;
+}
+
+async function send(){
+  const input=$("#in"); const text=input.value.trim();
+  if(!text||busy) return;
+  vib(); bump();
+  let c=chats.find(x=>x.id===cur);
+  if(!c){ c={id:uid(),title:text.slice(0,40),messages:[]}; chats.unshift(c); cur=c.id; }
+  c.messages.push({role:"user",content:text});
+  const reply={role:"assistant",content:""}; c.messages.push(reply);
+  input.value=""; grow(); busy=true; $("#send").disabled=true;
+  renderList(); renderThread();
+  const node=$("#thread").lastChild.firstChild;
+  try{
+    const res=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:c.messages.slice(0,-1),useDocs:S.useDocs&&DOCS.length>0,web:S.web!==false,now:localISO()})});
+    if(res.status===401){ location.reload(); return; }
+    if(!res.ok){ let e=await res.text(); try{ e=JSON.parse(e).error; }catch(_){} throw new Error(typeof e==="string"?e:JSON.stringify(e)); }
+    const rd=res.body.getReader(), dec=new TextDecoder(); let buf="";
+    while(true){
+      const {value,done}=await rd.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split("\n"); buf=lines.pop();
+      for(const ln of lines){
+        if(!ln.startsWith("data:")) continue;
+        try{
+          const j=JSON.parse(ln.slice(5)); if(j.sources) reply.sources=j.sources;
+          const gm=j.candidates&&j.candidates[0]&&j.candidates[0].groundingMetadata;
+          if(gm&&gm.groundingChunks) gm.groundingChunks.forEach(g=>{ if(g.web){ reply.web=reply.web||[]; if(!reply.web.some(w=>w.u===g.web.uri)) reply.web.push({t:g.web.title||g.web.uri,u:g.web.uri}); } });
+          const p=j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts;
+          if(p) reply.content+=p.map(x=>x.text||"").join("");
+        }catch(_){}
+      }
+      node.innerHTML=botHtml(reply); $("#scroll").scrollTop=1e9;
+    }
+    const tg=parseTags(reply.content); reply.content=tg.clean; saveTags(tg.o,reply);
+    if(!reply.content) reply.content="No response was returned. Try rephrasing your message.";
+    node.innerHTML=botHtml(reply); ping(reply.content);
+  }catch(e){
+    reply.content=reply.content||"";
+    node.innerHTML=(reply.content?md(reply.content):"")+'<p class="err">Request failed: '+esc(String(e.message||e).slice(0,300))+"</p>";
+    if(!reply.content) c.messages.pop();
+  }
+  busy=false; $("#send").disabled=false; save(); input.focus();
+}
+
+function grow(){ const i=$("#in"); i.style.height="auto"; i.style.height=Math.min(i.scrollHeight,200)+"px"; }
+$("#in").addEventListener("input",grow);
+$("#in").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey&&!/Mobi|Android/i.test(navigator.userAgent)){ e.preventDefault(); send(); } });
+$("#send").onclick=send;
+$("#new").onclick=()=>{ cur=null; renderList(); renderThread(); $("#side").classList.remove("open"); $("#in").focus(); };
+$("#menu").onclick=()=>$("#side").classList.toggle("open");
+
+// ---- Settings ----
+let S={theme:"system",font:"default",haptic:true,notify:false,useDocs:true,web:true,brief:true};
+let DOCS=[], pendingDel="", MEM={};
+let UPGRADE="";
+try{ Object.assign(S,JSON.parse(localStorage.getItem("astra-settings")||"{}")); }catch(e){}
+const FONTS={default:"var(--serif)",sans:"var(--sans)",mono:"ui-monospace,Menlo,Consolas,monospace"};
+const LBL={theme:{system:"System",light:"Light",dark:"Dark"},font:{default:"Default",sans:"Sans-serif",mono:"Monospace"}};
+function applyS(){
+  const r=document.documentElement;
+  if(S.theme==="system") r.removeAttribute("data-theme"); else r.setAttribute("data-theme",S.theme);
+  r.style.setProperty("--reply",FONTS[S.font]||FONTS.default);
+}
+function saveS(){ try{ localStorage.setItem("astra-settings",JSON.stringify(S)); }catch(e){} applyS(); renderSettings(); }
+function vib(){ if(S.haptic&&navigator.vibrate) navigator.vibrate(12); }
+const ic=(p)=>`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const I={
+  user:ic('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3"/><path d="M6.2 18.2c1.4-2 3.4-3 5.8-3s4.4 1 5.8 3"/>'),
+  moon:ic('<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/>'),
+  aa:'<span style="font-size:19px;font-family:var(--sans)">Aa</span>',
+  hap:ic('<rect x="8" y="4" width="8" height="16" rx="2"/><path d="M4.5 8v8M19.5 8v8"/>'),
+  down:ic('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'),
+  trash:ic('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
+  out:ic('<path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/>'),
+  back:ic('<path d="M15 5l-7 7 7 7"/>'),
+  info:ic('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'),
+  bell:ic('<path d="M6 17v-6a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4"/>'),
+  share:ic('<path d="M12 15V4M8 8l4-4 4 4M5 13v7h14v-7"/>'),
+  dollar:ic('<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.4-.8-1.4-1.2-2.5-1.2-1.4 0-2.5.7-2.5 1.8 0 2.5 5 1.2 5 3.7 0 1.1-1.1 1.8-2.5 1.8-1.1 0-2.1-.5-2.5-1.3M12 6.5v1.5M12 16v1.5"/>'),
+  db:ic('<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>'),
+  sun:ic('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  globe:ic('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>'),
+  doc:ic('<path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6"/>')
+};
+$("#sback").innerHTML=I.back; $("#sinfo").innerHTML=I.info;
+function row(a,icon,title,sub,end,cls){
+  return `<button class="row ${cls||""}" data-a="${a}"><span class="ic">${icon}</span><span class="rt">${title}${sub?`<small>${esc(sub)}</small>`:""}</span>${end||""}</button>`;
+}
+function renderSettings(){
+  const g=user&&user.id.startsWith("g:");
+  $("#sbody").innerHTML=
+    `<div class="acct"><b>${esc(user?user.name:"")}</b><span class="badge">${g?"Google":"Password"}</span></div>`+
+    `<div class="upg"><h3>Want more Astra?</h3><p>Upgrade for more usage and capabilities.</p><button data-a="upgrade">Upgrade</button></div>`+
+    `<div class="grp">${row("profile",I.user,"Profile")}${row("docs",I.doc,"My documents",DOCS.length+(DOCS.length===1?" file":" files"))}${row("billing",I.dollar,"Billing","Free plan")}</div>`+
+    `<div class="grp">${row("theme",I.moon,"Color mode",LBL.theme[S.theme])}${row("font",I.aa,"Font style",LBL.font[S.font])}</div>`+
+    `<div class="grp">${row("memory",I.db,"Memory & data",MEM.on===false?"Off":((MEM.facts||[]).length+" remembered"))}${row("brief",I.sun,"Morning briefing","",`<span class="tg ${S.brief!==false?"on":""}"></span>`)}${row("web",I.globe,"Search the web","Shows its sources",`<span class="tg ${S.web!==false?"on":""}"></span>`)}</div>`+
+    `<div class="grp">${row("haptic",I.hap,"Haptic feedback","",`<span class="tg ${S.haptic?"on":""}"></span>`)}${row("notify",I.bell,"Notifications",S.notify?(VAPID?"On · works when the app is closed":"On"):"Off",`<span class="tg ${S.notify?"on":""}"></span>`)}${row("share",I.share,"Sharing","Send a chat to anyone")}${row("export",I.down,"Export chats")}${row("clear",I.trash,"Delete all chats")}</div>`+
+    `<div class="grp">${row("logout",I.out,"Log out","","","danger")}</div>`;
+}
+function closeSheet(){ $("#sheet").hidden=true; }
+function pick(title,opts,cur,fn){
+  $("#sht").textContent=title;
+  $("#shb").innerHTML=opts.map(([v,l])=>`<button class="opt ${v===cur?"on":""}" data-v="${v}">${l}<span>${v===cur?"✓":""}</span></button>`).join("");
+  $("#shb").onclick=e=>{ const b=e.target.closest("[data-v]"); if(b){ fn(b.dataset.v); closeSheet(); } };
+  $("#sheet").hidden=false;
+}
+function note(title,body,btns){
+  $("#sht").textContent=title;
+  $("#shb").innerHTML=body+(btns||'<button class="opt" data-x="close">Close</button>');
+  $("#shb").onclick=e=>{
+    const b=e.target.closest("[data-x]"); if(!b) return;
+    const x=b.dataset.x;
+    if(x==="clear"){ chats=[]; cur=null; save(); renderList(); renderThread(); }
+    if(x==="deldoc") delDoc();
+    if(x==="memclear") mpost({action:"clear"}).then(renderMem);
+    if(x==="memwipe") mpost({action:"wipe"}).then(()=>{ DOCS=[]; renderMem(); });
+    closeSheet();
+    if(x==="upgrade") upgrade();
+  };
+  $("#sheet").hidden=false;
+}
+function upgrade(){
+  if(UPGRADE) window.open(UPGRADE,"_blank","noopener");
+  else note("Upgrade","<p>Paid plans aren't available yet. They will appear here once they are set up.</p>");
+}
+function usage(){
+  const k="astra-usage:"+(user?user.id:""), d=new Date().toISOString().slice(0,10); let u={d:d,n:0};
+  try{ const j=JSON.parse(localStorage.getItem(k)); if(j&&j.d===d) u=j; }catch(e){}
+  return [k,u];
+}
+function bump(){ const [k,u]=usage(); u.n++; try{ localStorage.setItem(k,JSON.stringify(u)); }catch(e){} }
+function ping(t){
+  if(S.notify&&document.hidden&&"Notification" in window&&Notification.permission==="granted"&&navigator.serviceWorker){
+    navigator.serviceWorker.ready.then(r=>r.showNotification("Astra replied",{body:t.replace(/[#*`]/g,"").slice(0,120),icon:"/icon-192.png",tag:"astra-reply"})).catch(()=>{});
+  }
+}
+function act(a){
+  if(a==="theme") pick("Color mode",[["system","System"],["light","Light"],["dark","Dark"]],S.theme,v=>{S.theme=v;saveS();});
+  else if(a==="font") pick("Font style",[["default","Default"],["sans","Sans-serif"],["mono","Monospace"]],S.font,v=>{S.font=v;saveS();});
+  else if(a==="haptic"){ S.haptic=!S.haptic; saveS(); vib(); }
+  else if(a==="profile") note("Profile",`<p><b>Name</b><br>${esc(user.name)}</p><p><b>Signed in with</b><br>${user.id.startsWith("g:")?"Google":"Name and password"}</p>`);
+  else if(a==="export"){
+    const u=URL.createObjectURL(new Blob([JSON.stringify(chats,null,2)],{type:"application/json"}));
+    const l=document.createElement("a"); l.href=u; l.download="astra-chats.json"; l.click(); setTimeout(()=>URL.revokeObjectURL(u),2000);
+  }
+  else if(a==="clear") note("Delete all chats?","<p>This permanently removes every chat saved in this browser.</p>",'<button class="opt danger" data-x="clear">Delete all</button><button class="opt" data-x="close">Cancel</button>');
+  else if(a==="docs") openLib();
+  else if(a==="billing") note("Billing",`<p><b>Current plan</b><br>Free</p><p><b>Messages today</b><br>${usage()[1].n}</p>`,'<button class="opt" data-x="upgrade">Upgrade<span>→</span></button><button class="opt" data-x="close">Close</button>');
+  else if(a==="upgrade") upgrade();
+  else if(a==="notify"){
+    if(S.notify){ S.notify=false; saveS(); pushOff(); }
+    else if(!("Notification" in window)) note("Notifications","<p>This device doesn't support notifications.</p>");
+    else Notification.requestPermission().then(p=>{ if(p==="granted"){ S.notify=true; saveS(); if(VAPID) pushOn().catch(()=>note("Notifications","<p>Background alerts could not be turned on for this device. In-app alerts still work.</p>")); } else note("Notifications blocked","<p>Allow notifications for Astra in your phone's app settings, then try again.</p>"); });
+  }
+  else if(a==="share"){
+    if(!chats.length) note("Sharing","<p>You have no chats to share yet.</p>");
+    else pick("Share a chat",chats.slice(0,12).map(c=>[c.id,esc(c.title)]),"",id=>{
+      const c=chats.find(x=>x.id===id); if(!c) return;
+      const text=c.messages.map(m=>(m.role==="user"?"You: ":"Astra: ")+m.content).join("\n\n");
+      if(navigator.share) navigator.share({title:c.title,text:text}).catch(()=>{});
+      else if(navigator.clipboard) navigator.clipboard.writeText(text).then(()=>setTimeout(()=>note("Copied","<p>The chat was copied to your clipboard.</p>"),0)).catch(()=>{});
+    });
+  }
+  else if(a==="memory") openMem();
+  else if(a==="brief"){ S.brief=S.brief===false; saveS(); syncPrefs(); }
+  else if(a==="web"){ S.web=S.web===false; saveS(); }
+  else if(a==="logout") logout();
+}
+$("#sbody").addEventListener("click",e=>{ const b=e.target.closest("[data-a]"); if(b) act(b.dataset.a); });
+$("#setb").onclick=()=>{ renderSettings(); $("#settings").hidden=false; $("#side").classList.remove("open"); };
+$("#sback").onclick=()=>{ $("#settings").hidden=true; };
+$("#sinfo").onclick=()=>note("About Astra","<p>Astra is an AI business assistant powered by Google Gemini.</p><p>No ads. Ever.</p><p>Version 1.0</p>");
+$("#shbg").onclick=closeSheet;
+applyS();
+
+// ---- Documents library ----
+function fmtKB(n){ return n>=1e6?(n/1e6).toFixed(1)+" MB":Math.max(1,Math.round(n/1e3))+" KB"; }
+function botHtml(m){
+  let h=md(parseTags(m.content).clean);
+  if(m.sources&&m.sources.length) h+='<div class="src">From your documents: '+m.sources.map(esc).join(", ")+"</div>";
+  if(m.web&&m.web.length) h+='<div class="src">Web sources: '+m.web.map(w=>'<a href="'+esc(w.u)+'" target="_blank" rel="noopener">'+esc(w.t)+"</a>").join(" · ")+"</div>";
+  if(m.saved&&m.saved.length) h+='<div class="src">Memory updated: '+m.saved.map(esc).join("; ")+"</div>";
+  return h;
+}
+function lstat(t,err){ const e=$("#lstat"); e.textContent=t||""; e.className=err?"err":""; }
+async function loadDocs(){
+  try{ const r=await fetch("/api/docs"); if(r.ok) DOCS=(await r.json()).docs||[]; }catch(e){}
+  renderLib();
+}
+function renderLib(){
+  $("#lback").innerHTML=I.back;
+  $("#lbody").innerHTML=
+    `<div class="grp"><button class="row" data-l="toggle"><span class="ic">${I.doc}</span><span class="rt">Answer from my documents<small>${S.useDocs?"On":"Off"}</small></span><span class="tg ${S.useDocs?"on":""}"></span></button></div>`+
+    `<button class="lbtn" data-l="add" style="margin-bottom:16px">+ Add document</button>`+
+    (DOCS.length
+      ? `<div class="grp">${DOCS.map(d=>`<div class="row"><span class="ic">${I.doc}</span><span class="rt">${esc(d.name)}<small>${d.chunks} passages · ${fmtKB(d.chars)}</small></span><button class="danger" data-l="del" data-id="${d.id}" aria-label="Remove ${esc(d.name)}" style="padding:8px 4px;font-size:18px">✕</button></div>`).join("")}</div>`
+      : `<p style="color:var(--mute);line-height:1.5;padding:0 6px">Add PDFs, Word files, text files or images with text. Astra will answer from them and show which files it used. Your documents are private to your account.</p>`);
+}
+function openLib(){ renderLib(); lstat(""); $("#lib").hidden=false; $("#side").classList.remove("open"); loadDocs(); }
+function loadScript(src){ return new Promise((ok,no)=>{ const e=document.createElement("script"); e.src=src; e.onload=ok; e.onerror=()=>no(new Error("Could not load the Word reader.")); document.head.appendChild(e); }); }
+function toB64(f){ return new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result.split(",")[1]); fr.readAsDataURL(f); }); }
+async function addDoc(file){
+  const ext=(file.name.split(".").pop()||"").toLowerCase();
+  try{
+    lstat("Reading "+file.name+"…");
+    const payload={action:"add",name:file.name};
+    if(["pdf","png","jpg","jpeg","webp"].includes(ext)){
+      if(file.size>3e6) throw new Error("PDFs and images must be under 3 MB.");
+      payload.file={mime:file.type||(ext==="pdf"?"application/pdf":"image/"+ext),b64:await toB64(file)};
+    }else if(ext==="docx"){
+      if(file.size>3e6) throw new Error("Word files must be under 3 MB.");
+      if(!window.mammoth) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js");
+      payload.text=(await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()})).value;
+    }else{
+      if(file.size>2e6) throw new Error("Text files must be under 2 MB.");
+      payload.text=await file.text();
+    }
+    lstat("Indexing "+file.name+". Long files can take a minute…");
+    const r=await fetch("/api/docs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.error||"Upload failed.");
+    lstat("Added "+file.name+".");
+    await loadDocs();
+  }catch(e){ lstat(e.message||"Upload failed.",true); }
+}
+async function delDoc(){
+  try{
+    await fetch("/api/docs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"delete",id:pendingDel})});
+  }catch(e){}
+  loadDocs();
+}
+$("#lbody").addEventListener("click",e=>{
+  const b=e.target.closest("[data-l]"); if(!b) return; const a=b.dataset.l;
+  if(a==="toggle"){ S.useDocs=!S.useDocs; saveS(); renderLib(); }
+  else if(a==="add") $("#lfile").click();
+  else if(a==="del"){ pendingDel=b.dataset.id; note("Remove document?","<p>Astra will no longer use this file to answer.</p>",'<button class="opt danger" data-x="deldoc">Remove</button><button class="opt" data-x="close">Cancel</button>'); }
+});
+$("#lfile").onchange=e=>{ const f=e.target.files[0]; e.target.value=""; if(f) addDoc(f); };
+$("#lback").onclick=()=>{ $("#lib").hidden=true; renderSettings(); };
+$("#docsb").onclick=openLib;
+
+// ---- Background push ----
+let VAPID="";
+async function pushKey(){ try{ VAPID=(await (await fetch("/api/push")).json()).key||""; }catch(e){} }
+function b64u(x){ const p="=".repeat((4-x.length%4)%4), b=atob((x+p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(b,c=>c.charCodeAt(0)); }
+async function pushOn(){
+  const reg=await navigator.serviceWorker.ready;
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
+  await fetch("/api/push",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"subscribe",sub:sub.toJSON()})});
+}
+async function pushOff(){
+  try{
+    const reg=await navigator.serviceWorker.ready, sub=await reg.pushManager.getSubscription();
+    if(sub){ await fetch("/api/push",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"unsubscribe",endpoint:sub.endpoint})}); await sub.unsubscribe(); }
+  }catch(e){}
+}
+function syncPrefs(){ if(user) mpost({action:"prefs",tz:new Date().getTimezoneOffset(),name:user.name,brief:S.brief!==false}); }
+
+// ---- Memory, reminders, briefing ----
+const CHIPS=[["Reply to a customer","Help me write a reply to a customer who "],["Write a promo post","Write a short promo post for "],["Plan my week","Help me plan my week. My priorities are "],["Draft an email","Draft an email to "]];
+$("#thread").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(b){ const i=$("#in"); i.value=b.dataset.p; grow(); i.focus(); } });
+function localISO(){
+  const d=new Date(),p=n=>String(n).padStart(2,"0"),o=-d.getTimezoneOffset(),a=Math.abs(o);
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+(o>=0?"+":"-")+p(Math.floor(a/60))+":"+p(a%60);
+}
+const TAG=/\[\[(remember|remind|followup):\s*([\s\S]*?)\]\]/g;
+function parseTags(s){
+  const o={facts:[],reminders:[],followups:[]};
+  const clean=(s||"").replace(TAG,(m,k,v)=>{
+    if(k==="remember") o.facts.push(v.trim());
+    else{ const i=v.indexOf("|"); if(i>0&&!isNaN(Date.parse(v.slice(0,i).trim()))){
+      const it={at:v.slice(0,i).trim()}, t=v.slice(i+1).trim();
+      if(k==="remind"){ it.text=t; o.reminders.push(it); } else { it.q=t; o.followups.push(it); } } }
+    return "";
+  }).replace(/\[\[[^\]]*$/,"").trimEnd();
+  return {clean:clean,o:o};
+}
+function saveTags(o,reply){
+  if(MEM.on===false||!(o.facts.length||o.reminders.length||o.followups.length)) return;
+  reply.saved=[].concat(o.facts,o.reminders.map(r=>"reminder for "+new Date(r.at).toLocaleString([],{dateStyle:"medium",timeStyle:"short"})),o.followups.map(()=>"I'll follow up later"));
+  mpost({action:"items",facts:o.facts,reminders:o.reminders,followups:o.followups});
+}
+async function mpost(b){
+  try{
+    const r=await fetch("/api/memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+    const j=await r.json().catch(()=>({})); if(r.ok) MEM=j.mem||{}; return r.ok;
+  }catch(e){ return false; }
+}
+async function loadMem(){ try{ const r=await fetch("/api/memory"); if(r.ok) MEM=(await r.json()).mem||{}; }catch(e){} }
+function checkDue(){
+  const due=(MEM.reminders||[]).filter(r=>Date.parse(r.at)<=Date.now());
+  if(!due.length) return;
+  MEM.reminders=MEM.reminders.filter(r=>!due.includes(r));
+  mpost({action:"del",kind:"reminders",ids:due.map(r=>r.id)});
+  if(S.notify&&"Notification" in window&&Notification.permission==="granted"&&navigator.serviceWorker)
+    navigator.serviceWorker.ready.then(g=>g.showNotification("Astra reminder",{body:due.map(r=>r.text).join("\n"),icon:"/icon-192.png",tag:"astra-rem"})).catch(()=>{});
+  note("Reminder",due.map(r=>"<p>"+esc(r.text)+"</p>").join(""));
+}
+async function maybeBrief(){
+  if(!user||S.brief===false||MEM.on===false||new Date().getHours()<5) return;
+  const day=localISO().slice(0,10), k="astra-brief:"+user.id;
+  try{ if(localStorage.getItem(k)===day) return; }catch(e){}
+  try{
+    const r=await fetch("/api/briefing",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({day:day,now:localISO()})});
+    const j=await r.json(); if(!r.ok) return;
+    try{ localStorage.setItem(k,day); }catch(e){}
+    if(!j.text) return;
+    const c={id:uid(),title:"Morning briefing",messages:[{role:"assistant",content:j.text}]};
+    chats.unshift(c); cur=c.id; save(); renderList(); renderThread(); loadMem();
+  }catch(e){}
+}
+setInterval(checkDue,30000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&user){ checkDue(); maybeBrief(); } });
+
+function lst(kind,items,fmt){
+  return items.length?`<div class="grp">${items.map(x=>`<div class="row"><span class="rt">${esc(fmt(x))}</span><button class="danger" data-m="del" data-k="${kind}" data-id="${x.id}" aria-label="Delete" style="padding:8px 4px;font-size:18px">✕</button></div>`).join("")}</div>`:'<p class="mut">Nothing here yet.</p>';
+}
+function renderMem(){
+  const on=MEM.on!==false,p=MEM.profile||{};
+  $("#mback").innerHTML=I.back;
+  $("#mbody").innerHTML=
+    `<div class="grp"><button class="row" data-m="on"><span class="rt">Remember things about me<small>${on?"On":"Off"}</small></span><span class="tg ${on?"on":""}"></span></button></div>`+
+    `<div class="grp"><button class="row" data-m="profile"><span class="rt">Business profile<small>${esc(p.biz||"Not set up")}</small></span></button></div>`+
+    `<h4 class="mh">What Astra remembers</h4>`+lst("facts",MEM.facts||[],x=>x.t)+
+    `<h4 class="mh">Reminders</h4>`+lst("reminders",MEM.reminders||[],x=>new Date(x.at).toLocaleString([],{dateStyle:"medium",timeStyle:"short"})+" · "+x.text)+
+    `<h4 class="mh">Follow-ups</h4>`+lst("followups",MEM.followups||[],x=>new Date(x.at).toLocaleDateString()+" · "+x.q)+
+    `<div class="grp" style="margin-top:20px"><button class="row danger" data-m="clear"><span class="rt">Delete all memory</span></button><button class="row danger" data-m="wipe"><span class="rt">Delete memory and documents<small>Removes everything stored on the server</small></span></button></div>`+
+    `<p class="mut">Astra shows no ads. Your memory is private to your account and only used to help you.</p>`;
+}
+function openMem(){ renderMem(); $("#mem").hidden=false; loadMem().then(renderMem); }
+$("#mback").onclick=()=>{ $("#mem").hidden=true; renderSettings(); };
+$("#mbody").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-m]"); if(!b) return; const a=b.dataset.m;
+  if(a==="on"){ await mpost({action:"toggle",on:MEM.on===false}); renderMem(); }
+  else if(a==="del"){ await mpost({action:"del",kind:b.dataset.k,id:b.dataset.id}); renderMem(); }
+  else if(a==="profile") openOnb();
+  else if(a==="clear") note("Delete all memory?","<p>Astra forgets your profile, facts, reminders and follow-ups. Your chats and documents stay.</p>",'<button class="opt danger" data-x="memclear">Delete</button><button class="opt" data-x="close">Cancel</button>');
+  else if(a==="wipe") note("Delete memory and documents?","<p>This removes your memory and every uploaded document from the server. It can't be undone.</p>",'<button class="opt danger" data-x="memwipe">Delete everything</button><button class="opt" data-x="close">Cancel</button>');
+});
+function openOnb(){
+  const p=MEM.profile||{};
+  $("#ob1").value=p.biz||""; $("#ob2").value=p.offer||""; $("#ob3").value=p.goal||""; $("#ob4").value=p.tone||"Friendly";
+  $("#onb").hidden=false;
+}
+$("#obsave").onclick=async()=>{
+  await mpost({action:"profile",profile:{biz:$("#ob1").value,offer:$("#ob2").value,goal:$("#ob3").value,tone:$("#ob4").value}});
+  $("#onb").hidden=true; if(!$("#mem").hidden) renderMem();
+};
+$("#obskip").onclick=async()=>{
+  if(!(MEM.profile&&MEM.profile.biz)) await mpost({action:"profile",profile:{skipped:true}});
+  $("#onb").hidden=true;
+};
+
+let mode="login";
+function setMode(m){
+  mode=m; const r=m==="register";
+  $("#ltitle").textContent=r?"Create your account":"Welcome back";
+  $("#lgo").textContent=r?"Sign up":"Log in";
+  $("#ltxt").textContent=r?"Already have an account?":"New to Astra?";
+  $("#lsw").textContent=r?"Log in":"Create account";
+  $("#lpw").autocomplete=r?"new-password":"current-password";
+  $("#lerr").textContent="";
+}
+async function api(body){
+  const res=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(j.error||"Something went wrong.");
+  return j;
+}
+async function submit(){
+  $("#lerr").textContent="";
+  try{ const j=await api({action:mode,name:$("#lname").value,password:$("#lpw").value}); enter(j.user); }
+  catch(e){ $("#lerr").textContent=e.message; }
+}
+$("#lgo").onclick=submit;
+$("#lpw").addEventListener("keydown",e=>{ if(e.key==="Enter") submit(); });
+$("#lsw").onclick=()=>setMode(mode==="login"?"register":"login");
+async function logout(){ try{ await api({action:"logout"}); }catch(e){} location.reload(); }
+
+function enter(u){
+  user=u; ukey="chats:"+u.id; $("#login").hidden=true; $("#uname").textContent=u.name;
+  cur=null; load(); renderList(); renderThread(); loadDocs();
+  pushKey().then(()=>{ if(S.notify&&VAPID&&"Notification" in window&&Notification.permission==="granted") pushOn().catch(()=>{}); });
+  loadMem().then(()=>{ syncPrefs(); if(!MEM.profile) openOnb(); else { checkDue(); maybeBrief(); } });
+}
+function showLogin(cid){
+  $("#login").hidden=false;
+  if(!cid){ $("#gbtn").style.display="none"; document.querySelector(".or").style.display="none"; return; }
+  const sc=document.createElement("script"); sc.src="https://accounts.google.com/gsi/client"; sc.async=true;
+  sc.onload=()=>{
+    google.accounts.id.initialize({client_id:cid,callback:async r=>{
+      try{ const j=await api({action:"google",credential:r.credential}); enter(j.user); }
+      catch(e){ $("#lerr").textContent=e.message; }
+    }});
+    google.accounts.id.renderButton($("#gbtn"),{theme:"outline",size:"large",text:"continue_with",shape:"pill",width:320});
+  };
+  document.head.appendChild(sc);
+}
+(async function boot(){
+  let info={};
+  try{ info=await (await fetch("/api/auth")).json(); }catch(e){}
+  UPGRADE=info.upgradeUrl||"";
+  if(info.user) enter(info.user); else showLogin(info.googleClientId);
+})();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(()=>{});
+
+// Splash screen: shows on launch and every time the app is reopened.
+(function(){
+  const sp=document.getElementById("splash"); let t;
+  const hide=(ms)=>{ clearTimeout(t); t=setTimeout(()=>sp.classList.add("off"),ms); };
+  const show=()=>{ sp.style.animation="none"; sp.classList.remove("off"); sp.querySelectorAll(".logo,.word").forEach(e=>{e.style.animation="none";void e.offsetWidth;e.style.animation="";}); hide(900); };
+  window.addEventListener("load",()=>hide(1300));
+  hide(2500); // safety fallback
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") sp.classList.remove("off"); else show(); });
+})();
+</script>
+</body>
+</html>
